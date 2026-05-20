@@ -15,27 +15,19 @@ st.set_page_config(
 st.title("🎓 CDUT 成理智答 - 智能课程助教")
 st.markdown("基于 **LangChain Agent** 架构构建，支持课程进度查询、作业查询及专业知识检索。")
 
-# 2. 初始化 Agent 大脑并存入 Session State
+# 2. 初始化 Agent 大脑并存入 Session State (内存模式)
 if "agent_instance" not in st.session_state:
-    with st.spinner("⚙️ 正在唤醒 Agent 大脑与加载知识库，请稍候..."):
-        # 实例化大脑
+    with st.spinner("⚙️ 正在云端内存中构建向量知识库，约需 10-20 秒，请稍候..."):
         agent_obj = CourseAssistantAgent()
 
-        # 【核心新增】：云端冷启动自检机制
-        db_path = os.path.join(BASE_DIR, "data", "chroma_db", "chroma.sqlite3")
-        if not os.path.exists(db_path):
-            st.warning("🔄 检测到首次运行，正在云端实时构建向量知识库，约需 10-20 秒...")
-            # 确保你的 test.pdf 文件名和路径是对的
-            pdf_path = os.path.join(BASE_DIR, "test.pdf")
-            try:
-                agent_obj.rag.ingest_pdf(pdf_path)
-                st.success("✅ 云端知识库构建完成！")
-            except Exception as e:
-                st.error(f"❌ 构建知识库失败，请检查 test.pdf 是否上传: {e}")
-
-        # 存入 Session
-        st.session_state.agent_instance = agent_obj
-    st.success("✅ 系统初始化完成！")
+        # 强制每次启动会话时，把 PDF 读入内存
+        pdf_path = os.path.join(BASE_DIR, "test.pdf")
+        try:
+            agent_obj.rag.ingest_pdf(pdf_path)
+            st.session_state.agent_instance = agent_obj
+            st.success("✅ 云端知识库加载成功！")
+        except Exception as e:
+            st.error(f"❌ 读取 PDF 失败: {e}")
 
 agent = st.session_state.agent_instance
 
