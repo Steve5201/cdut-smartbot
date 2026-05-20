@@ -2,6 +2,8 @@
 import streamlit as st
 from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 from core_agent import CourseAssistantAgent
+import os
+from config import BASE_DIR
 
 # 1. 设置网页标题和全局配置 (给网信处领导看的排面)
 st.set_page_config(
@@ -13,10 +15,26 @@ st.set_page_config(
 st.title("🎓 CDUT 成理智答 - 智能课程助教")
 st.markdown("基于 **LangChain Agent** 架构构建，支持课程进度查询、作业查询及专业知识检索。")
 
-# 2. 初始化 Agent 大脑并存入 Session State (避免每次刷新网页都重新加载模型)
+# 2. 初始化 Agent 大脑并存入 Session State
 if "agent_instance" not in st.session_state:
     with st.spinner("⚙️ 正在唤醒 Agent 大脑与加载知识库，请稍候..."):
-        st.session_state.agent_instance = CourseAssistantAgent()
+        # 实例化大脑
+        agent_obj = CourseAssistantAgent()
+
+        # 【核心新增】：云端冷启动自检机制
+        db_path = os.path.join(BASE_DIR, "data", "chroma_db", "chroma.sqlite3")
+        if not os.path.exists(db_path):
+            st.warning("🔄 检测到首次运行，正在云端实时构建向量知识库，约需 10-20 秒...")
+            # 确保你的 test.pdf 文件名和路径是对的
+            pdf_path = os.path.join(BASE_DIR, "test.pdf")
+            try:
+                agent_obj.rag.ingest_pdf(pdf_path)
+                st.success("✅ 云端知识库构建完成！")
+            except Exception as e:
+                st.error(f"❌ 构建知识库失败，请检查 test.pdf 是否上传: {e}")
+
+        # 存入 Session
+        st.session_state.agent_instance = agent_obj
     st.success("✅ 系统初始化完成！")
 
 agent = st.session_state.agent_instance
