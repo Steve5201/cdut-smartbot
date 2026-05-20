@@ -1,5 +1,6 @@
 # rag_manager.py
 import os
+import chromadb # 新增引入
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -11,19 +12,18 @@ class RAGManager:
     def __init__(self):
         print("⚙️ 正在初始化 RAG 模块...")
 
-        # 1. 初始化 Embedding 模型
+        # 【防御性代码】：强制清除残留的底层单例缓存，彻底根除 ephemeral 报错！
+        chromadb.api.client.SharedSystemClient.clear_system_cache()
+
         self.embeddings = HuggingFaceEmbeddings(
             model_name="shibing624/text2vec-base-chinese"
         )
 
-        # 2. 初始化 Chroma 向量数据库
-        # 【核心修改】：去掉了 persist_directory，启用极速且安全的“内存模式”！
         self.vector_store = Chroma(
             embedding_function=self.embeddings,
             collection_name="cdut_docs"
         )
 
-        # 3. 初始化文本切分器
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=CHUNK_SIZE,
             chunk_overlap=CHUNK_OVERLAP

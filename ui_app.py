@@ -1,47 +1,41 @@
 # ui_app.py
+import os
 import streamlit as st
 from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 from core_agent import CourseAssistantAgent
-import os
 from config import BASE_DIR
 
-# 1. 设置网页标题和全局配置 (给网信处领导看的排面)
-st.set_page_config(
-    page_title="成理智答 | BERT课程助教",
-    page_icon="🎓",
-    layout="wide"
-)
-
+st.set_page_config(page_title="成理智答 | BERT课程助教", page_icon="🎓", layout="wide")
 st.title("🎓 CDUT 成理智答 - 智能课程助教")
 st.markdown("基于 **LangChain Agent** 架构构建，支持课程进度查询、作业查询及专业知识检索。")
 
-# 2. 初始化 Agent 大脑并存入 Session State (内存模式)
-if "agent_instance" not in st.session_state:
-    with st.spinner("⚙️ 正在云端内存中构建向量知识库，约需 10-20 秒，请稍候..."):
-        agent_obj = CourseAssistantAgent()
 
-        # 强制每次启动会话时，把 PDF 读入内存
-        pdf_path = os.path.join(BASE_DIR, "test.pdf")
-        try:
-            agent_obj.rag.ingest_pdf(pdf_path)
-            st.session_state.agent_instance = agent_obj
-            st.success("✅ 云端知识库加载成功！")
-        except Exception as e:
-            st.error(f"❌ 读取 PDF 失败: {e}")
+# 【核心性能优化】：使用 cache_resource 确保全局只初始化一次大脑和知识库！
+@st.cache_resource(show_spinner=False)
+def get_global_agent():
+    print("🚀 首次启动，正在执行耗时的底层初始化...")
+    agent_obj = CourseAssistantAgent()
+    pdf_path = os.path.join(BASE_DIR, "test.pdf")
+    try:
+        agent_obj.rag.ingest_pdf(pdf_path)
+    except Exception as e:
+        st.error(f"知识库加载异常: {e}")
+    return agent_obj
 
-agent = st.session_state.agent_instance
 
-# 3. 渲染侧边栏
+# 加载动画
+with st.spinner("⚙️ 系统状态：正在连接云端向量记忆体..."):
+    agent = get_global_agent()
+
+# 侧边栏监控
 with st.sidebar:
     st.header("⚙️ 助教状态监控")
-    st.write("🟢 大模型: 已连接")
-    st.write("🟢 向量库: 已挂载")
-    st.write("🟢 核心工具数: 3")
+    st.write("🟢 内存知识库: 已挂载并锁定")
+    st.write("🟢 响应模式: 极速缓存模式")
     st.divider()
-    st.write("👨‍💻 开发人员: 成都理工大学 地质专业毕业生")
-    st.write("✨ 核心技术: ReAct Agent, RAG, Tool Calling")
+    st.write("👨‍💻 开发: 成理毕业生")
 
-    # 清空记忆按钮
+    # 清空当前会话的历史记忆
     if st.button("🗑️ 清空历史对话"):
         agent.chat_history = []
         st.success("记忆已清空")
