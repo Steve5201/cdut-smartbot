@@ -1,0 +1,11 @@
+langchain==0.2.16
+langchain-core==0.2.43
+langchain-openai==0.1.23
+langchain-community==0.2.16
+langchain-chroma==0.1.4
+langchain-huggingface==0.0.3
+streamlit
+chromadb
+pypdf
+sentence-transformers
+python-dotenv

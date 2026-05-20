@@ -1,0 +1,8 @@
+# 忽略虚拟环境
+.venv/
+venv/
+# 绝对不能把秘钥传到公网！
+.env
+# 忽略 PyCharm 配置文件
+.idea/
+__pycache__/
