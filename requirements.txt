@@ -9,3 +9,4 @@ chromadb
 pypdf
 sentence-transformers
 python-dotenv
+protobuf==4.25.3
