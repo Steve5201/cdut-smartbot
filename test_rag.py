@@ -14,7 +14,7 @@ def run_rag_test():
 
     # 2. 测试搜索
     # 请把下面的问题改成你 test.pdf 文档里实际包含的内容！！
-    test_question = "提取一个文档里面的关键词作为问题写在这里"
+    test_question = "第一章"
     rag.test_search(test_question)
 
 
